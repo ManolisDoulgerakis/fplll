@@ -77,7 +77,6 @@ void ParallelEnumerationDyn<ZT, FT>::enumerate(int first, int last, FT &fmaxdist
   for (unsigned i = 0; i < get_threads(); ++i)
     if (_bottom_fmaxdist[i] < fmaxdist)
       fmaxdist = _bottom_fmaxdist[i];
-
 }
 
 template <typename ZT, typename FT> bool ParallelEnumerationDyn<ZT, FT>::do_work(unsigned i)

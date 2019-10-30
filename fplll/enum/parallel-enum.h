@@ -40,8 +40,7 @@ private:
   ParallelEnumerationDyn<ZT, FT> &_parent;
 };
 
-template <typename ZT, typename FT>
-class BottomEvaluator : public Evaluator<FT>
+template <typename ZT, typename FT> class BottomEvaluator : public Evaluator<FT>
 {
 public:
   BottomEvaluator(ParallelEnumerationDyn<ZT, FT> &parent) : _parent(parent) {}
@@ -60,8 +59,7 @@ private:
   ParallelEnumerationDyn<ZT, FT> &_parent;
 };
 
-template <typename ZT, typename FT>
-class ParallelEnumerationDyn
+template <typename ZT, typename FT> class ParallelEnumerationDyn
 {
 public:
   ParallelEnumerationDyn(MatGSO<ZT, FT> &gso, Evaluator<FT> &evaluator)
@@ -72,14 +70,14 @@ public:
   void enumerate(int first, int last, FT &fmaxdist, long fmaxdistexpo, int split = -1,
                  const vector<FT> &target_coord = vector<FT>(),
                  const vector<enumxt> &subtree  = vector<enumxt>(),
-                 const vector<enumf> &pruning = vector<enumf>());
+                 const vector<enumf> &pruning   = vector<enumf>());
 
-  inline uint64_t get_nodes() const 
+  inline uint64_t get_nodes() const
   {
-  	uint64_t nodes = _topenum.get_nodes();
-  	for (auto& e : _bottom_enums)
-  		nodes += e.get_nodes();
-  	return nodes; 
+    uint64_t nodes = _topenum.get_nodes();
+    for (auto &e : _bottom_enums)
+      nodes += e.get_nodes();
+    return nodes;
   }
 
   inline void process_top_node(const vector<FT> &new_sol_coord, const enumf &new_partial_dist)
@@ -144,7 +142,6 @@ private:
   enumf _maxdist;
 
   std::atomic_bool _finished;
-
 };
 
 FPLLL_END_NAMESPACE

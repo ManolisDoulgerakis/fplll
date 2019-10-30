@@ -14,6 +14,7 @@
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "parallel-enum.h"
+#include "enumerate.h"
 
 FPLLL_BEGIN_NAMESPACE
 
@@ -43,18 +44,17 @@ void ParallelEnumerationDyn<ZT, FT>::enumerate(int first, int last, FT &fmaxdist
   _target_coord = target_coord;
   _subtree      = subtree;
   _pruning      = pruning;
-  _dual         = dual;
 
   _toptrees.clear();
   _toptrees.reserve(1 << 16);
 
-  _bottom_eval.clear();
+  _bottom_evals.clear();
   for (unsigned i = 0; i < get_threads(); ++i)
-    _bottom_eval.emplace_back(*this);
+    _bottom_evals.emplace_back(*this);
 
   _bottom_enums.clear();
   for (unsigned i = 0; i < get_threads(); ++i)
-    _bottom_enums.emplace_back(_gso, _bottom_eval[i]);
+    _bottom_enums.emplace_back(_gso, _bottom_evals[i]);
 
   _bottom_fmaxdist.clear();
   for (unsigned i = 0; i < get_threads(); ++i)
@@ -69,7 +69,7 @@ void ParallelEnumerationDyn<ZT, FT>::enumerate(int first, int last, FT &fmaxdist
   FT fmaxdisttop = fmaxdist;
   _topenum.enumerate(first, split, fmaxdisttop, fmaxdistexpo, target_coord, subtree, pruning);
 
-  finished = true;
+  _finished = true;
   threadpool.wait_work();
   /* finished enumeration */
 
@@ -78,18 +78,13 @@ void ParallelEnumerationDyn<ZT, FT>::enumerate(int first, int last, FT &fmaxdist
     if (_bottom_fmaxdist[i] < fmaxdist)
       fmaxdist = _bottom_fmaxdist[i];
 
-  if (dual && !_evaluator.empty())
-  {
-    for (auto it = _evaluator.begin(), itend = _evaluator.end(); it != itend; ++it)
-      reverse_by_swap(it->second, 0, d - 1);
-  }
 }
 
 template <typename ZT, typename FT> bool ParallelEnumerationDyn<ZT, FT>::do_work(unsigned i)
 {
   vector<enumxt> subtree;
   {
-    lockguard lock(_mutex);
+    lock_guard lock(_mutex);
     if (_toptrees.empty())
       return false;
     subtree = std::move(_toptrees.back());
@@ -99,7 +94,7 @@ template <typename ZT, typename FT> bool ParallelEnumerationDyn<ZT, FT>::do_work
   {
     _bottom_fmaxdist[i] = _fmaxdist;
     _bottom_enums[i].enumerate(_first, _last, _bottom_fmaxdist[i], _fmaxdistexpo, _target_coord,
-                               subtree, _pruning, _dual);
+                               subtree, _pruning);
   }
   else
     _bottom_enums[i].next_subtree_enumerate(_bottom_fmaxdist[i], _fmaxdistexpo, subtree);
@@ -119,5 +114,41 @@ template <typename ZT, typename FT> void ParallelEnumerationDyn<ZT, FT>::thread_
     }
   }
 }
+
+template class ParallelEnumerationDyn<Z_NR<mpz_t>, FP_NR<double>>;
+
+#ifdef FPLLL_WITH_LONG_DOUBLE
+template class ParallelEnumerationDyn<Z_NR<mpz_t>, FP_NR<long double>>;
+#endif
+
+#ifdef FPLLL_WITH_QD
+template class ParallelEnumerationDyn<Z_NR<mpz_t>, FP_NR<dd_real>>;
+
+template class ParallelEnumerationDyn<Z_NR<mpz_t>, FP_NR<qd_real>>;
+#endif
+
+#ifdef FPLLL_WITH_DPE
+template class ParallelEnumerationDyn<Z_NR<mpz_t>, FP_NR<dpe_t>>;
+#endif
+
+template class ParallelEnumerationDyn<Z_NR<mpz_t>, FP_NR<mpfr_t>>;
+
+template class ParallelEnumerationDyn<Z_NR<long>, FP_NR<double>>;
+
+#ifdef FPLLL_WITH_LONG_DOUBLE
+template class ParallelEnumerationDyn<Z_NR<long>, FP_NR<long double>>;
+#endif
+
+#ifdef FPLLL_WITH_QD
+template class ParallelEnumerationDyn<Z_NR<long>, FP_NR<dd_real>>;
+
+template class ParallelEnumerationDyn<Z_NR<long>, FP_NR<qd_real>>;
+#endif
+
+#ifdef FPLLL_WITH_DPE
+template class ParallelEnumerationDyn<Z_NR<long>, FP_NR<dpe_t>>;
+#endif
+
+template class ParallelEnumerationDyn<Z_NR<long>, FP_NR<mpfr_t>>;
 
 FPLLL_END_NAMESPACE

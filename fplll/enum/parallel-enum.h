@@ -16,6 +16,7 @@
 #include <fplll/defs.h>
 #include <fplll/enum/enumerate.h>
 #include <fplll/enum/enumerate_ext.h>
+#include <fplll/threadpool.h>
 
 FPLLL_BEGIN_NAMESPACE
 
@@ -37,7 +38,7 @@ public:
 
 private:
   ParallelEnumerationDyn<ZT, FT> &_parent;
-}
+};
 
 template <typename ZT, typename FT>
 class BottomEvaluator : public Evaluator<FT>
@@ -57,7 +58,7 @@ public:
 
 private:
   ParallelEnumerationDyn<ZT, FT> &_parent;
-}
+};
 
 template <typename ZT, typename FT>
 class ParallelEnumerationDyn
@@ -71,16 +72,21 @@ public:
   void enumerate(int first, int last, FT &fmaxdist, long fmaxdistexpo, int split = -1,
                  const vector<FT> &target_coord = vector<FT>(),
                  const vector<enumxt> &subtree  = vector<enumxt>(),
-                 const vector<enumf> &pruning = vector<enumf>(), bool dual = false,
-                 bool subtree_reset = false);
+                 const vector<enumf> &pruning = vector<enumf>());
 
-  inline uint64_t get_nodes() const { return nodes; }
+  inline uint64_t get_nodes() const 
+  {
+  	uint64_t nodes = _topenum.get_nodes();
+  	for (auto& e : _bottom_enums)
+  		nodes += e.get_nodes();
+  	return nodes; 
+  }
 
   inline void process_top_node(const vector<FT> &new_sol_coord, const enumf &new_partial_dist)
   {
     while (true)
     {
-      lockguard lock(_mutex);
+      lock_guard lock(_mutex);
       if (_toptrees.size() < _toptrees.capacity())
       {
         _toptrees.emplace_back(new_sol_coord);
@@ -94,7 +100,7 @@ public:
   inline void process_sol(const vector<FT> &new_sol_coord, const enumf &new_partial_dist,
                           enumf &maxdist, long norm_exp)
   {
-    lockguard lock(_mutex);
+    lock_guard lock(_mutex);
     if (_maxdist < 0)
       _maxdist = maxdist;
     if (_evaluator.normExp != norm_exp)
@@ -104,9 +110,9 @@ public:
   }
 
   inline void process_subsol(int offset, const vector<FT> &new_sub_sol_coord, const enumf &sub_dist,
-                             long norm_exp);
+                             long norm_exp)
   {
-    lockguard lock(_mutex);
+    lock_guard lock(_mutex);
     if (_evaluator.normExp != norm_exp)
       _evaluator.set_normexp(norm_exp);
     _evaluator.eval_sub_sol(offset, new_sub_sol_coord, sub_dist);
@@ -139,7 +145,7 @@ private:
 
   std::atomic_bool _finished;
 
-}
+};
 
 FPLLL_END_NAMESPACE
 

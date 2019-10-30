@@ -77,6 +77,7 @@ libfplll_la_SOURCES=fplll.cpp fplll.h \
 	enum/enumerate_base.cpp enum/enumerate_base.h \
 	enum/enumerate_ext.cpp enum/enumerate_ext.h \
 	enum/evaluator.cpp enum/evaluator.h \
+	enum/parallel-enum.cpp enum/parallel-enum.h \
 	lll.cpp lll.h \
 	wrapper.cpp wrapper.h \
 	bkz.cpp bkz.h \

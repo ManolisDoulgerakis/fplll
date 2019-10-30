@@ -179,7 +179,7 @@ void EnumerationDyn<ZT, FT>::next_subtree_enumerate(FT &fmaxdist, long fmaxdiste
   do_enumerate();
   restore_rounding();
 
-  FT fmaxdistnorm = maxdist;  // Exact
+  fmaxdistnorm = maxdist;  // Exact
   fmaxdist.mul_2si(fmaxdistnorm, normexp - fmaxdistexpo);
 
   if (dual && !_evaluator.empty())

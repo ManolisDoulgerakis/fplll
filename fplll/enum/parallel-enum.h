@@ -32,7 +32,7 @@ public:
   {
     _parent.process_top_node(new_sol_coord, new_partial_dist);
   }
-  virtual void eval_subsol(int offset, const vector<FT> &new_sub_sol_coord, const enumf &sub_dist)
+  virtual void eval_sub_sol(int offset, const vector<FT> &new_sub_sol_coord, const enumf &sub_dist)
   {
   }
 
@@ -50,7 +50,7 @@ public:
   {
     _parent.process_sol(new_sol_coord, new_partial_dist, maxdist, this->normExp);
   }
-  virtual void eval_subsol(int offset, const vector<FT> &new_sub_sol_coord, const enumf &sub_dist)
+  virtual void eval_sub_sol(int offset, const vector<FT> &new_sub_sol_coord, const enumf &sub_dist)
   {
     _parent.process_subsol(offset, new_sub_sol_coord, sub_dist, this->normExp);
   }
@@ -63,7 +63,7 @@ template <typename ZT, typename FT> class ParallelEnumerationDyn
 {
 public:
   ParallelEnumerationDyn(MatGSO<ZT, FT> &gso, Evaluator<FT> &evaluator)
-      : _topeval(*this), _topenum(gso, _topeval), _evaluator(evaluator)
+      : _topeval(*this), _topenum(gso, _topeval), _gso(gso), _evaluator(evaluator)
   {
   }
 
@@ -87,7 +87,9 @@ public:
       lock_guard lock(_mutex);
       if (_toptrees.size() < _toptrees.capacity())
       {
-        _toptrees.emplace_back(new_sol_coord);
+        _toptrees.emplace_back(new_sol_coord.size());
+        for (unsigned i = 0; i < new_sol_coord.size(); ++i)
+          _toptrees.back()[i] = new_sol_coord[i].get_d();
         return;
       }
       // no place, so lets work and then try again
@@ -135,7 +137,7 @@ private:
   std::vector<BottomEvaluator<ZT, FT>> _bottom_evals;
   std::vector<EnumerationDyn<ZT, FT>> _bottom_enums;
   std::vector<FT> _bottom_fmaxdist;
-  std::vector<vector<FT>> _toptrees;
+  std::vector<vector<enumxt>> _toptrees;
 
   MatGSO<ZT, FT> &_gso;
   Evaluator<FT> &_evaluator;

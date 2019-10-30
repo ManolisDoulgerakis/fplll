@@ -89,7 +89,8 @@ void EnumerationDyn<ZT, FT>::enumerate(int first, int last, FT &fmaxdist, long f
   }
 
   FT fr, fmu, fmaxdistnorm;
-  long rexpo, normexp = -1;
+  long rexpo;
+  normexp = -1;
   for (int i = 0; i < d; ++i)
   {
     fr      = _gso.get_r_exp(i + first, i + first, rexpo);
@@ -149,6 +150,36 @@ void EnumerationDyn<ZT, FT>::enumerate(int first, int last, FT &fmaxdist, long f
 
   fmaxdistnorm = maxdist;  // Exact
 
+  fmaxdist.mul_2si(fmaxdistnorm, normexp - fmaxdistexpo);
+
+  if (dual && !_evaluator.empty())
+  {
+    for (auto it = _evaluator.begin(), itend = _evaluator.end(); it != itend; ++it)
+      reverse_by_swap(it->second, 0, d - 1);
+  }
+}
+
+template <typename ZT, typename FT>
+void EnumerationDyn<ZT, FT>::next_subtree_enumerate(FT &fmaxdist, long fmaxdistexpo,
+                                                    const vector<enumxt> &subtree)
+{
+  if (dual && !_evaluator.empty())
+  {
+    for (auto it = _evaluator.begin(), itend = _evaluator.end(); it != itend; ++it)
+      reverse_by_swap(it->second, 0, d - 1);
+  }
+
+  FT fmaxdistnorm;
+  fmaxdistnorm.mul_2si(fmaxdist, fmaxdistexpo - normexp);
+  maxdist = fmaxdistnorm.get_d(GMP_RNDU);
+  _evaluator.set_normexp(normexp);
+
+  save_rounding();
+  prepare_enumeration(subtree, is_svp, false);
+  do_enumerate();
+  restore_rounding();
+
+  FT fmaxdistnorm = maxdist;  // Exact
   fmaxdist.mul_2si(fmaxdistnorm, normexp - fmaxdistexpo);
 
   if (dual && !_evaluator.empty())

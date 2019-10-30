@@ -44,14 +44,17 @@ public:
                  const vector<enumf> &pruning = vector<enumf>(), bool dual = false,
                  bool subtree_reset = false);
 
+  void next_subtree_enumerate(FT &fmaxdist, long fmaxdistexpo, const vector<enumxt> &subtree);
+
   inline uint64_t get_nodes() const { return nodes; }
 
-private:
+protected:
   MatGSO<ZT, FT> &_gso;
   Evaluator<FT> &_evaluator;
   vector<FT> target;
 
   vector<enumf> pruning_bounds;
+  long normexp;
   enumf maxdist;
   vector<FT> fx;
 

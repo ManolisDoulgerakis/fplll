@@ -34,10 +34,12 @@ nobase_include_fplll_HEADERS=defs.h fplll.h \
 	enum/evaluator.h \
 	wrapper.h \
 	bkz_param.h \
-	enum/enumerate.h enum/enumerate_base.h enum/enumerate_ext.h \
+	enum/enumerate.h enum/enumerate_base.h enum/enumerate_ext.h enum/enumerate_dyn.h enum/parallel-enum.h \
 	sieve/sieve_gauss.h sieve/sieve_common.h sieve/sieve_gauss_str.h sieve/sampler_basic.h \
 	pruner/pruner.h pruner/pruner_simplex.h \
-	householder.h hlll.h
+	householder.h hlll.h \
+	threadpool.h \
+	io/json.hpp io/thread_pool.hpp
 
 bin_PROGRAMS=fplll latticegen latsieve
 check_PROGRAMS=llldiff
@@ -75,6 +77,7 @@ libfplll_la_SOURCES=fplll.cpp fplll.h \
 	enum/topenum.cpp enum/topenum.h \
 	enum/enumerate.cpp enum/enumerate.h \
 	enum/enumerate_base.cpp enum/enumerate_base.h \
+	enum/enumerate_dyn.cpp enum/enumerate_dyn.h \
 	enum/enumerate_ext.cpp enum/enumerate_ext.h \
 	enum/evaluator.cpp enum/evaluator.h \
 	enum/parallel-enum.cpp enum/parallel-enum.h \

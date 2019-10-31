@@ -10,12 +10,12 @@
    You should have received a copy of the GNU Lesser General Public License
    along with fplll. If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef ENUMLIB_EXTENUM_HPP
-#define ENUMLIB_EXTENUM_HPP
+#ifndef FPLLL_PARALLEL_ENUM_H
+#define FPLLL_PARALLEL_ENUM_H
 
 #include <fplll/defs.h>
-#include <fplll/enum/enumerate.h>
-#include <fplll/enum/enumerate_ext.h>
+#include <fplll/enum/enumerate_base.h>
+#include <fplll/enum/enumerate_dyn.h>
 #include <fplll/threadpool.h>
 
 FPLLL_BEGIN_NAMESPACE
@@ -72,25 +72,21 @@ public:
                  const vector<enumxt> &subtree  = vector<enumxt>(),
                  const vector<enumf> &pruning   = vector<enumf>());
 
-  inline uint64_t get_nodes() const
-  {
-    uint64_t nodes = _topenum.get_nodes();
-    for (auto &e : _bottom_enums)
-      nodes += e.get_nodes();
-    return nodes;
-  }
+  inline uint64_t get_nodes() const { return _nodes; }
 
   inline void process_top_node(const vector<FT> &new_sol_coord, const enumf &new_partial_dist)
   {
     while (true)
     {
-      lock_guard lock(_mutex);
-      if (_toptrees.size() < _toptrees.capacity())
       {
-        _toptrees.emplace_back(new_sol_coord.size());
-        for (unsigned i = 0; i < new_sol_coord.size(); ++i)
-          _toptrees.back()[i] = new_sol_coord[i].get_d();
-        return;
+        lock_guard lock(_mutex);
+        if (_toptrees.size() < _toptrees.capacity())
+        {
+          _toptrees.emplace_back(new_sol_coord.size());
+          for (unsigned i = 0; i < new_sol_coord.size(); ++i)
+            _toptrees.back()[i] = new_sol_coord[i].get_d();
+          return;
+        }
       }
       // no place, so lets work and then try again
       do_work(_bottom_enums.size() - 1);
@@ -131,6 +127,7 @@ private:
   vector<enumxt> _subtree;
   vector<enumf> _pruning;
   bool _dual;
+  std::atomic_uint64_t _nodes;
 
   TopEvaluator<ZT, FT> _topeval;
   EnumerationDyn<ZT, FT> _topenum;

@@ -21,52 +21,14 @@
 
 #include <array>
 #include <fplll/enum/enumerate_base.h>
+#include <fplll/enum/enumerate_dyn.h>
+#include <fplll/enum/parallel-enum.h>
 #include <fplll/enum/enumerate_ext.h>
 #include <fplll/enum/evaluator.h>
 #include <fplll/gso.h>
 #include <memory>
 
 FPLLL_BEGIN_NAMESPACE
-
-template <typename ZT, typename FT> class EnumerationDyn : public EnumerationBase
-{
-public:
-  EnumerationDyn(MatGSO<ZT, FT> &gso, Evaluator<FT> &evaluator,
-                 const vector<int> &max_indices = vector<int>())
-      : _gso(gso), _evaluator(evaluator)
-  {
-    _max_indices = max_indices;
-  }
-
-  void enumerate(int first, int last, FT &fmaxdist, long fmaxdistexpo,
-                 const vector<FT> &target_coord = vector<FT>(),
-                 const vector<enumxt> &subtree  = vector<enumxt>(),
-                 const vector<enumf> &pruning = vector<enumf>(), bool dual = false,
-                 bool subtree_reset = false);
-
-  void next_subtree_enumerate(FT &fmaxdist, long fmaxdistexpo, const vector<enumxt> &subtree);
-
-  inline uint64_t get_nodes() const { return nodes; }
-
-protected:
-  MatGSO<ZT, FT> &_gso;
-  Evaluator<FT> &_evaluator;
-  vector<FT> target;
-
-  vector<enumf> pruning_bounds;
-  long normexp;
-  enumf maxdist;
-  vector<FT> fx;
-
-  void prepare_enumeration(const vector<enumxt> &subtree, bool solvingsvp, bool subtree_reset);
-
-  void do_enumerate();
-
-  void set_bounds();
-  void reset(enumf cur_dist, int cur_depth);
-  virtual void process_solution(enumf newmaxdist);
-  virtual void process_subsolution(int offset, enumf newdist);
-};
 
 template <typename ZT, typename FT> class Enumeration
 {
@@ -96,11 +58,23 @@ public:
     }
     // if external enumerator is not available, not possible or when it fails then fall through to
     // fplll enumeration
-    if (enumdyn.get() == nullptr)
-      enumdyn.reset(new EnumerationDyn<ZT, FT>(_gso, _evaluator, _max_indices));
-    enumdyn->enumerate(first, last, fmaxdist, fmaxdistexpo, target_coord, subtree, pruning, dual,
+    if (get_threads() > 1 && last-first > 10 && dual == false && subtree_reset == false && _max_indices.empty())
+    {
+//      std::cout << "parallel enum: yes" << std::endl;
+      if (enumparalleldyn.get() == nullptr)
+        enumparalleldyn.reset(new ParallelEnumerationDyn<ZT, FT>(_gso, _evaluator));
+      enumparalleldyn->enumerate(first, last, fmaxdist, fmaxdistexpo, -1, target_coord, subtree, pruning);
+      _nodes = enumparalleldyn->get_nodes();
+    }
+    else
+    {
+//      std::cout << "parallel enum: no" << std::endl;
+      if (enumdyn.get() == nullptr)
+        enumdyn.reset(new EnumerationDyn<ZT, FT>(_gso, _evaluator, _max_indices));
+      enumdyn->enumerate(first, last, fmaxdist, fmaxdistexpo, target_coord, subtree, pruning, dual,
                        subtree_reset);
-    _nodes = enumdyn->get_nodes();
+      _nodes = enumdyn->get_nodes();
+    }
   }
 
   inline uint64_t get_nodes() const { return _nodes; }
@@ -110,6 +84,7 @@ private:
   Evaluator<FT> &_evaluator;
   vector<int> _max_indices;
   std::unique_ptr<EnumerationDyn<ZT, FT>> enumdyn;
+  std::unique_ptr<ParallelEnumerationDyn<ZT, FT>> enumparalleldyn;
   std::unique_ptr<ExternalEnumeration<ZT, FT>> enumext;
   uint64_t _nodes;
 };

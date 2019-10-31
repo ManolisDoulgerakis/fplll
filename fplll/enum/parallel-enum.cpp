@@ -28,8 +28,8 @@ void ParallelEnumerationDyn<ZT, FT>::enumerate(int first, int last, FT &fmaxdist
     last = _gso.d;
   int d = last - first;
   if (split == -1)
-    split = 1 + (d - subtree.size()) / 20;
-  if (split < subtree.size() + 1 || split >= d - 1)
+    split = first + 1 + (d - subtree.size()) / 20;
+  if (split < first + subtree.size() + 1 || split >= first + d - 1)
     throw std::runtime_error("ParallelEnumerationDyn::enumerate(): split out of bounds");
 
   /* prepare bottom enumeration jobs */
@@ -68,7 +68,7 @@ void ParallelEnumerationDyn<ZT, FT>::enumerate(int first, int last, FT &fmaxdist
   /* start top tree enumeration */
   FT fmaxdisttop = fmaxdist;
   _topenum.enumerate(first, split, fmaxdisttop, fmaxdistexpo, target_coord, subtree, pruning);
-
+  _nodes += _topenum.get_nodes();
   _finished = true;
   threadpool.wait_work();
   /* finished enumeration */
@@ -97,6 +97,7 @@ template <typename ZT, typename FT> bool ParallelEnumerationDyn<ZT, FT>::do_work
   }
   else
     _bottom_enums[i].next_subtree_enumerate(_bottom_fmaxdist[i], _fmaxdistexpo, subtree);
+  _nodes += _bottom_enums[i].get_nodes();
   return true;
 }
 

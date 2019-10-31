@@ -22,9 +22,9 @@
 #include <array>
 #include <fplll/enum/enumerate_base.h>
 #include <fplll/enum/enumerate_dyn.h>
-#include <fplll/enum/parallel-enum.h>
 #include <fplll/enum/enumerate_ext.h>
 #include <fplll/enum/evaluator.h>
+#include <fplll/enum/parallel-enum.h>
 #include <fplll/gso.h>
 #include <memory>
 
@@ -58,21 +58,23 @@ public:
     }
     // if external enumerator is not available, not possible or when it fails then fall through to
     // fplll enumeration
-    if (get_threads() > 1 && last-first > 10 && dual == false && subtree_reset == false && _max_indices.empty())
+    if (get_threads() > 1 && last - first > 10 && dual == false && subtree_reset == false &&
+        _max_indices.empty())
     {
-//      std::cout << "parallel enum: yes" << std::endl;
+      //      std::cout << "parallel enum: yes" << std::endl;
       if (enumparalleldyn.get() == nullptr)
         enumparalleldyn.reset(new ParallelEnumerationDyn<ZT, FT>(_gso, _evaluator));
-      enumparalleldyn->enumerate(first, last, fmaxdist, fmaxdistexpo, -1, target_coord, subtree, pruning);
+      enumparalleldyn->enumerate(first, last, fmaxdist, fmaxdistexpo, -1, target_coord, subtree,
+                                 pruning);
       _nodes = enumparalleldyn->get_nodes();
     }
     else
     {
-//      std::cout << "parallel enum: no" << std::endl;
+      //      std::cout << "parallel enum: no" << std::endl;
       if (enumdyn.get() == nullptr)
         enumdyn.reset(new EnumerationDyn<ZT, FT>(_gso, _evaluator, _max_indices));
       enumdyn->enumerate(first, last, fmaxdist, fmaxdistexpo, target_coord, subtree, pruning, dual,
-                       subtree_reset);
+                         subtree_reset);
       _nodes = enumdyn->get_nodes();
     }
   }

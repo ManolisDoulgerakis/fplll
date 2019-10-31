@@ -25,7 +25,7 @@ FPLLL_BEGIN_NAMESPACE
 
 // set & get external enumerator (nullptr => disabled)
 //#if FPLLL_MAX_PARALLEL_ENUM_DIM != 0
-//std::function<extenum_fc_enumerate> fplll_extenum = enumlib::enumlib_enumerate;
+// std::function<extenum_fc_enumerate> fplll_extenum = enumlib::enumlib_enumerate;
 //#else
 std::function<extenum_fc_enumerate> fplll_extenum = nullptr;
 //#endif
